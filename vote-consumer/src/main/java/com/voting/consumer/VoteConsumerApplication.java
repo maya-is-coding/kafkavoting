@@ -31,7 +31,7 @@ public class VoteConsumerApplication {
         loadResults();
     }
 
-    @KafkaListener(topics = "votes", groupId = "voting-group")
+    @KafkaListener(topics = "election-votes", groupId = "voting-group")
     public void listen(String message) {
         // Message is now in format "AadharID:CandidateName"
         String[] parts = message.split(":", 2);

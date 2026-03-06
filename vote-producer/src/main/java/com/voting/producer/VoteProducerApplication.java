@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 public class VoteProducerApplication {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private static final String TOPIC = "votes";
+    private static final String TOPIC = "election-votes";
 
     public VoteProducerApplication(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
