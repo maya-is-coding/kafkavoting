@@ -3,7 +3,7 @@ $apiUrlBase = "http://<COMPUTER_3_IP>:8080/vote"
 Write-Host "Simulating 1,000 distinct voters casting votes across all parties..."
 
 $totalVotes = 1000
-$candidates = @("Falcon Party", "Lion Party", "Dolphin Party", "Elephant Party")
+$candidates = @("The Future Party", "Progress United", "Common Ground", "The Bridge Alliance")
 
 # Fire off 1,000 concurrent web requests with distinct Aadhar numbers
 1..$totalVotes | ForEach-Object -Parallel {
