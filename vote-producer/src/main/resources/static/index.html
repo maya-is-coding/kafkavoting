@@ -250,6 +250,22 @@
             box-shadow: none;
         }
 
+        .clear-memory-btn {
+            display: block;
+            margin: 1.5rem auto 0;
+            background: none;
+            border: none;
+            color: rgba(148, 163, 184, 0.7);
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        .clear-memory-btn:hover {
+            color: var(--text-main);
+        }
+
         .loading-spinner {
             display: none;
             width: 24px;
@@ -432,6 +448,9 @@
                 <div class="loading-spinner" id="btnSpinner"></div>
             </button>
         </form>
+
+        <button class="clear-memory-btn" onclick="clearLocalVotingRecord()">Clear my local voting record (Demo
+            Reset)</button>
     </div>
 
     <div class="toast" id="toast">
@@ -440,6 +459,15 @@
     </div>
 
     <script>
+        function clearLocalVotingRecord() {
+            localStorage.removeItem('votedAadhars');
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = 'Local device voting record cleared!';
+            document.getElementById('toastIcon').textContent = '✓';
+            toast.className = 'toast show success';
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('voteForm');
             const aadharInput = document.getElementById('aadhar');
@@ -512,6 +540,13 @@
                 const aadhar = aadharInput.value.trim();
                 if (!aadhar || !selectedCandidate) return;
 
+                // 🚀 FEAT: Check local storage to visually block double-voting right from the UI
+                const votedAadhars = JSON.parse(localStorage.getItem('votedAadhars') || '[]');
+                if (votedAadhars.includes(aadhar)) {
+                    showToast('Warning: You have already cast a vote with this Aadhar ID!', 'error');
+                    return;
+                }
+
                 setSubmitting(true);
 
                 try {
@@ -530,6 +565,10 @@
 
                     if (response.ok) {
                         showToast('Vote successfully cast!', 'success');
+
+                        // Save Aadhar to local storage to prevent duplicate votes in this browser
+                        votedAadhars.push(aadhar);
+                        localStorage.setItem('votedAadhars', JSON.stringify(votedAadhars));
 
                         // Reset Form visually on success
                         setTimeout(() => {
