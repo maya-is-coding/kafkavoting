@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Voting Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-hover: rgba(51, 65, 85, 0.8);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --success: #10b981;
+            --error: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 20% 20%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+            color: var(--text-main);
+            font-size: 1.1rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(148, 163, 184, 0.5);
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .candidate-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .candidate-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .candidate-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: var(--glass-hover);
+        }
+
+        .candidate-card:hover::before {
+            opacity: 1;
+        }
+
+        .candidate-card.selected {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        .candidate-card.selected .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .candidate-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .candidate-card:hover .candidate-icon {
+            transform: scale(1.1);
+        }
+
+        .candidate-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .check-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1.25rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+            transform: translateX(-100%) rotate(45deg);
+            transition: transform 0.6s ease;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-submit:hover:not(:disabled)::after {
+            transform: translateX(100%) rotate(45deg);
+        }
+
+        .btn-submit:disabled {
+            background: rgba(148, 163, 184, 0.2);
+            color: rgba(148, 163, 184, 0.5);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            border-radius: 999px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+            box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.3);
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .toast.success .toast-icon {
+            background: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            background: var(--error);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Ambient background floating orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.5;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+
+        .orb-1 {
+            width: 300px;
+            height: 300px;
+            background: #3b82f6;
+            top: -100px;
+            left: -100px;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: #8b5cf6;
+            bottom: -150px;
+            right: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(30px, 30px) scale(1.1);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem;
+            }
+
+            .candidates-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>Cast Your Vote</h1>
+            <p class="subtitle">Secure, Anonymous, Real-Time Voting</p>
+        </header>
+
+        <form id="voteForm">
+            <div class="form-group">
+                <label for="aadhar">Aadhar ID Number</label>
+                <div class="input-wrapper">
+                    <input type="text" id="aadhar" placeholder="Enter your 12-digit Aadhar or Unique ID" required
+                        autocomplete="off">
+                </div>
+            </div>
+
+            <label>Select Your Candidate</label>
+            <div class="candidates-grid" id="candidatesGrid">
+                <div class="candidate-card" data-id="Falcon Party">
+                    <div class="check-icon">✓</div>
+                    <div class="candidate-icon">🦅</div>
+                    <div class="candidate-name">Falcon Party</div>
+                </div>
+                <div class="candidate-card" data-id="Lion Party">
+                    <div class="check-icon">✓</div>
+                    <div class="candidate-icon">🦁</div>
+                    <div class="candidate-name">Lion Party</div>
+                </div>
+                <div class="candidate-card" data-id="Dolphin Party">
+                    <div class="check-icon">✓</div>
+                    <div class="candidate-icon">🐬</div>
+                    <div class="candidate-name">Dolphin Party</div>
+                </div>
+                <div class="candidate-card" data-id="Elephant Party">
+                    <div class="check-icon">✓</div>
+                    <div class="candidate-icon">🐘</div>
+                    <div class="candidate-name">Elephant Party</div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-submit" disabled>
+                <span id="btnText">Submit Vote</span>
+                <div class="loading-spinner" id="btnSpinner"></div>
+            </button>
+        </form>
+    </div>
+
+    <div class="toast" id="toast">
+        <div class="toast-icon" id="toastIcon">!</div>
+        <div class="toast-message" id="toastMessage">Message goes here</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('voteForm');
+            const aadharInput = document.getElementById('aadhar');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const candidateCards = document.querySelectorAll('.candidate-card');
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+
+            let selectedCandidate = null;
+
+            // Candidate Selection
+            candidateCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    // Remove selected class from all
+                    candidateCards.forEach(c => c.classList.remove('selected'));
+
+                    // Add to clicked
+                    card.classList.add('selected');
+                    selectedCandidate = card.dataset.id;
+
+                    validateForm();
+                });
+            });
+
+            // Form Validation on Input
+            aadharInput.addEventListener('input', validateForm);
+
+            function validateForm() {
+                const aadharVal = aadharInput.value.trim();
+                if (aadharVal.length > 0 && selectedCandidate) {
+                    submitBtn.removeAttribute('disabled');
+                } else {
+                    submitBtn.setAttribute('disabled', 'true');
+                }
+            }
+
+            function showToast(message, type) {
+                toastMessage.textContent = message;
+
+                toast.className = 'toast show ' + type;
+                toastIcon.textContent = type === 'success' ? '✓' : '✕';
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
+            }
+
+            function setSubmitting(isSubmitting) {
+                if (isSubmitting) {
+                    btnText.style.display = 'none';
+                    btnSpinner.style.display = 'block';
+                    submitBtn.setAttribute('disabled', 'true');
+                    aadharInput.setAttribute('disabled', 'true');
+                    candidateCards.forEach(c => c.style.pointerEvents = 'none');
+                } else {
+                    btnText.style.display = 'block';
+                    btnSpinner.style.display = 'none';
+                    aadharInput.removeAttribute('disabled');
+                    candidateCards.forEach(c => c.style.pointerEvents = 'auto');
+                    validateForm(); // Re-validate to enable/disable button
+                }
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const aadhar = aadharInput.value.trim();
+                if (!aadhar || !selectedCandidate) return;
+
+                setSubmitting(true);
+
+                try {
+                    // Make the POST request to the API
+                    // Note: API is /vote?candidate=X&aadhar=Y
+                    const targetUrl = `/vote?candidate=${encodeURIComponent(selectedCandidate)}&aadhar=${encodeURIComponent(aadhar)}`;
+
+                    const response = await fetch(targetUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const responseText = await response.text();
+
+                    if (response.ok) {
+                        showToast('Vote successfully cast!', 'success');
+
+                        // Reset Form visually on success
+                        setTimeout(() => {
+                            aadharInput.value = '';
+                            candidateCards.forEach(c => c.classList.remove('selected'));
+                            selectedCandidate = null;
+                            validateForm();
+                        }, 1500);
+                    } else {
+                        // Handle server-side rejections
+                        showToast(responseText || 'Failed to submit vote.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Submission error:', error);
+                    showToast('Connection error. Is the server running?', 'error');
+                } finally {
+                    setSubmitting(false);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

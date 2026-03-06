@@ -1,0 +1,60 @@
+# Distributed Systems Project Distribution Strategy
+
+Since this is a distributed systems class evaluation, the presentation should focus cleanly on the components of distributed architecture.
+
+## Strategy: 4 Computers, 4 Distinct Roles
+
+This is the perfect way to use and explain 4 distinct physical computers during your presentation.
+
+### Computer 1 (Member 1): The Backbone Network
+- **Role:** Administrator / Infrastructure Engineer
+- **Runs:** The Docker [docker-compose.yml](file:///c:/Users/Anusree/OneDrive/Desktop/voting-kafka/docker-compose.yml) (Zookeeper + 2 Kafka Brokers).
+
+### Computer 2 (Member 2): The Processor
+- **Role:** Consumer Data Engineer
+- **Runs:** The `vote-consumer` Spring Boot app (it connects to Computer 1's IP address).
+
+### Computer 3 (Member 3): The Voting Portal (Voter 1)
+- **Role:** API Producer A 
+- **Runs:** The `vote-producer` app (it connects to Computer 1's IP address).
+
+### Computer 4 (Member 4): The Load Tester / Scalability Expert
+- **Role:** Simulated Mass Voter
+- **Runs:** A simple copy-paste script that blasts 1,000 votes to Computer 3.
+
+---
+
+## Data Structures and Algorithms (DS & Algo) Used
+
+If your professor asks, "What Data Structures and Algorithms does this application use under the hood?", here is your cheat sheet:
+
+### 1. The Core Data Structure: `HashMap` (in Java)
+In the [VoteConsumerApplication.java](file:///c:/Users/Anusree/OneDrive/Desktop/voting-kafka/vote-consumer/src/main/java/com/voting/consumer/VoteConsumerApplication.java), we use a `HashMap<String, Integer>`.
+- **Why?** A HashMap stores data in Key-Value pairs (e.g., `"Candidate A" -> 500 votes`).
+- **Algorithm Benefit:** It provides an **O(1) time complexity** for lookups and insertions. This means whether you have 2 candidates or 2,000 candidates, the computer can instantly find the candidate and increment their vote without having to scan through a long list. This is critical for high-load systems.
+
+### 2. The Core Algorithm: The Accumulator Pattern (State Management)
+The Consumer uses a continuous accumulator algorithm to process the endless stream of votes.
+1. **Listen:** Continuously poll the Kafka event stream in a `while(true)` loop.
+2. **Synchronize:** Lock the in-memory tally (`synchronized (this)`) so that if two votes arrive at the exact same nanosecond, they don't overwrite each other (this is called *Thread Safety* or *Mutual Exclusion*).
+3. **Accumulate:** `voteCounts.put(candidate, voteCounts.getOrDefault(candidate, 0) + 1);`
+4. **Persist:** Instantly write the new total state to `results.txt` for fault recovery.
+
+---
+
+## Why We DO Track "Who" Voted (Voter Authentication Check)
+
+A common question is: **"How do you stop someone from voting twice?"**
+
+You proudly get to show the professor that you actually thought of this and built a blazing fast, memory-optimized authentication check right into your Data Consumer. 
+
+Here is exactly what you tell the Professor if they ask:
+
+> **"We implemented a 'One Vote Per Aadhar' security check directly in the Consumer to prevent duplicate voting. When our API (Computer 3) receives a vote, it asks for the Candidate and the user's Aadhar ID. It sends this over Kafka to the Consumer (Computer 2). The Consumer uses a Java `HashSet` Data Structure to track the Aadhar IDs. 
+Because a `HashSet` has an O(1) Time Complexity, our system can verify if an Aadhar ID is a duplicate in less than a millisecond, completely ignoring it if they try to vote twice. This allows us to guarantee perfect vote counts without slowing down our 1,000-vote Load Test!"**
+
+### How to test this during the demo:
+1. Run a test where someone votes: `curl -X POST "http://<Computer_3_IP>:8080/vote?candidate=A&aadhar=1234"`
+2. Try to run the exact same command a second time.
+3. Show the professor that **Computer 2's Screen** will instantly reject it, printing: `"Duplicate vote rejected for Aadhar: 1234"`!
+4. Show the professor the final vote tally on Computer 2 was not incremented.

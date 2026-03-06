@@ -1,0 +1,126 @@
+Distributed Systems Project Distribution Strategy
+Since this is a distributed systems class evaluation, the presentation should focus cleanly on the components of distributed architecture.
+
+Strategy: 4 Computers, 4 Distinct Roles
+This is the perfect way to use and explain 4 distinct physical computers during your presentation.
+
+Computer 1 (Member 1): The Backbone Network
+Role: Administrator / Infrastructure Engineer
+Runs: The Docker 
+docker-compose.yml
+ (Zookeeper + 2 Kafka Brokers).
+Computer 2 (Member 2): The Processor
+Role: Consumer Data Engineer
+Runs: The vote-consumer Spring Boot app (it connects to Computer 1's IP address).
+Computer 3 (Member 3): The Voting Portal (Voter 1)
+Role: API Producer A
+Runs: The vote-producer app (it connects to Computer 1's IP address).
+Computer 4 (Member 4): The Load Tester / Scalability Expert
+Role: Simulated Mass Voter
+Runs: A simple copy-paste script that blasts 1,000 votes to Computer 3.
+Data Structures and Algorithms (DS & Algo) Used
+If your professor asks, "What Data Structures and Algorithms does this application use under the hood?", here is your cheat sheet:
+
+1. The Core Data Structure: HashMap (in Java)
+In the 
+VoteConsumerApplication.java
+, we use a HashMap<String, Integer>.
+
+Why? A HashMap stores data in Key-Value pairs (e.g., "Candidate A" -> 500 votes).
+Algorithm Benefit: It provides an O(1) time complexity for lookups and insertions. This means whether you have 2 candidates or 2,000 candidates, the computer can instantly find the candidate and increment their vote without having to scan through a long list. This is critical for high-load systems.
+2. The Core Algorithm: The Accumulator Pattern (State Management)
+The Consumer uses a continuous accumulator algorithm to process the endless stream of votes.
+
+Listen: Continuously poll the Kafka event stream in a while(true) loop.
+Synchronize: Lock the in-memory tally (synchronized (this)) so that if two votes arrive at the exact same nanosecond, they don't overwrite each other (this is called Thread Safety or Mutual Exclusion).
+Accumulate: voteCounts.put(candidate, voteCounts.getOrDefault(candidate, 0) + 1);
+Persist: Instantly write the new total state to results.txt for fault recovery.
+Why We DO Track "Who" Voted (Voter Authentication Check)
+A common question is: "How do you stop someone from voting twice?"
+
+You proudly get to show the professor that you actually thought of this and built a blazing fast, memory-optimized authentication check right into your Data Consumer.
+
+Here is exactly what you tell the Professor if they ask:
+
+"We implemented a 'One Vote Per Aadhar' security check directly in the Consumer to prevent duplicate voting. When our API (Computer 3) receives a vote, it asks for the Candidate and the user's Aadhar ID. It sends this over Kafka to the Consumer (Computer 2). The Consumer uses a Java HashSet Data Structure to track the Aadhar IDs. Because a HashSet has an O(1) Time Complexity, our system can verify if an Aadhar ID is a duplicate in less than a millisecond, completely ignoring it if they try to vote twice. This allows us to guarantee perfect vote counts without slowing down our 1,000-vote Load Test!"
+
+How to test this during the demo:
+Run a test where someone votes: curl -X POST "http://<Computer_3_IP>:8080/vote?candidate=A&aadhar=1234"
+Try to run the exact same command a second time.
+Show the professor that Computer 2's Screen will instantly reject it, printing: "Duplicate vote rejected for Aadhar: 1234"!
+Show the professor the final vote tally on Computer 2 was not incremented.
+What to Send to Your 3 Teammates Before Class
+The goal is to physically divide the microservices across laptops to prove it is a distributed system.
+
+Computer 1 (You - The Administrator):
+
+You keep the 
+docker-compose.yml
+ file. You run the Kafka Cluster (the backbone).
+Computer 2 (Teammate 2 - The Consumer):
+
+Zip up and send them the vote-consumer folder.
+They run the Java Spring Boot consumer that processes data from your backbone.
+Computer 3 (Teammate 3 - The Producer):
+
+Zip up and send them the vote-producer folder.
+They run the Java Spring Boot API that receives votes and publishes to your backbone.
+Computer 4 (Teammate 4 - The Load Tester):
+
+Send them only the 
+load-test.ps1
+ file.
+How it works: This is the core concept of an API! A user's computer (Computer 4) does not need the source code to use an app. Just like your phone doesn't have Instagram's backend code on it, Computer 4 only needs a simple script that sends HTTP web traffic over the Wi-Fi to Computer 3's API. The script is just acting like 1,000 independent web browsers clicking "Vote".
+The Demo Day Setup (On the Classroom Wi-Fi)
+Because you will be on a new Wi-Fi network in the classroom, the IP addresses of your laptops will change. Do these setup steps first before the professor comes over.
+
+Step 1: Get the new Wi-Fi IP Addresses
+Have Computer 1 (You) and Computer 3 (Producer) open a terminal and type ipconfig. Write down the IPv4 Address for Computer 1 (e.g., 192.168.1.10) and Computer 3 (e.g., 192.168.1.15).
+
+Step 2: Update the Code with the New IPs
+Computer 1 (You): Open 
+docker-compose.yml
+ and replace localhost on lines 17 and 30 with Computer 1's new IP address. Save the file.
+
+Computer 2 (Consumer) AND Computer 3 (Producer): Open 
+src\main\resources\application.properties
+ and replace localhost with Computer 1's new IP address. Save the file.
+
+Computer 4 (Load Tester): Right-click 
+load-test.ps1
+ and choose "Edit" (or open in Notepad). Replace <COMPUTER_3_IP> with Computer 3's new IP address. Save the file.
+
+Executing the Demo (When the Professor Arrives)
+1. Start the Backbone
+Computer 1 (Administrator), in terminal: docker compose up -d (Wait 15 seconds for Kafka to fully boot up)
+
+2. Start the Processor
+Computer 2 (Consumer), in terminal: cd vote-consumer mvn spring-boot:run
+
+3. Start the Portal
+Computer 3 (Producer), in terminal: cd vote-producer mvn spring-boot:run
+
+4. Cast the First Single Vote
+Computer 3 (Producer) opens a new terminal and runs: curl -X POST "http://localhost:8080/vote?candidate=A&aadhar=1111"
+
+Computer 2 (Consumer) points to their screen and shows: Valid vote processed for: A by Aadhar: 1111!
+
+Computer 2 then types: curl "http://localhost:8081/results" (It will return {"A": 1})
+
+5. Execute the Load Test
+Take out Computer 4.
+
+Computer 4 (Load Tester) explains: "This computer has zero code on it. It just acts as the public internet. I am going to fire 1,000 parallel web requests over the Wi-Fi at Computer 3's API to simulate a massive voting event. Each vote will have a unique Aadhar ID."
+
+Computer 4 runs in PowerShell: Type 
+.\load-test.ps1
+ and press enter.
+
+Look at Computer 2's screen. The terminal will be flying by at lightning speed printing all 1,000 votes as it catches them from the Kafka backbone. It will not crash.
+
+Computer 2 types: curl "http://localhost:8081/results" (It will return exactly {"A": 1001})
+
+
+Comment
+Ctrl+Alt+M
+

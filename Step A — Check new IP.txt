@@ -1,0 +1,15 @@
+Step A — Check new IP
+ipconfig
+
+Copy the new IPv4.
+
+Step B — Restart Kafka with new IP
+
+Stop Kafka
+
+docker compose down
+
+Update the IP in docker-compose.yml
+
+Start again
+docker compose up -d
