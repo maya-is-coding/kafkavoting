@@ -1,15 +1,26 @@
 $apiUrlBase = "http://<COMPUTER_3_IP>:8080/vote"
-$candidate = "A"
 
-Write-Host "Simulating 1,000 distinct voters casting votes for Candidate A..."
+Write-Host "Simulating 1,000 distinct voters casting votes across all parties..."
 
 $totalVotes = 1000
+$candidates = @("Falcon Party", "Lion Party", "Dolphin Party", "Elephant Party")
 
 # Fire off 1,000 concurrent web requests with distinct Aadhar numbers
 1..$totalVotes | ForEach-Object -Parallel {
     $randomAadhar = [guid]::NewGuid().ToString().Substring(0,8)
-    $fullUrl = "$using:apiUrlBase`?candidate=$using:candidate&aadhar=$randomAadhar"
-    Invoke-WebRequest -Uri $fullUrl -Method POST -UseBasicParsing | Out-Null
+    
+    # Select a random candidate from the array
+    $candidateList = $using:candidates
+    $randomCandidate = $candidateList | Get-Random
+    $encodedCandidate = [uri]::EscapeDataString($randomCandidate)
+    
+    $fullUrl = "$using:apiUrlBase`?candidate=$encodedCandidate&aadhar=$randomAadhar"
+    
+    try {
+        Invoke-WebRequest -Uri $fullUrl -Method POST -UseBasicParsing | Out-Null
+    } catch {
+        # Ignore temporary failure
+    }
 } -ThrottleLimit 50
 
 Write-Host "Done! 1,000 distinct Aadhar votes successfully blasted to Computer 3."
