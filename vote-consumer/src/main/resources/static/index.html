@@ -295,7 +295,8 @@
 
         async function fetchResults() {
             try {
-                const response = await fetch(API_URL);
+                // Attach a cache-busting timestamp so the browser NEVER returns stale cached data
+                const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
                 renderResults(data);

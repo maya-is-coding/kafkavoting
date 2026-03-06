@@ -100,29 +100,8 @@ public class VoteConsumerApplication {
 
     @GetMapping("/results")
     public Map<String, Integer> getResults() {
-        // Since we are maintaining state in memory as well, we could just return
-        // voteCounts,
-        // but reading from the file proves the file works!
-        // Let's actually read from the file to satisfy the "Results API reads
-        // results.txt" requirement.
-
-        Map<String, Integer> results = new HashMap<>();
-        File file = new File(RESULTS_FILE);
-        if (!file.exists()) {
-            return results;
-        }
-
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split("=");
-                if (parts.length == 2) {
-                    results.put(parts[0], Integer.parseInt(parts[1]));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return results;
+        // Return the in-memory map for real-time accuracy and to avoid file locking
+        // issues
+        return new HashMap<>(voteCounts);
     }
 }
