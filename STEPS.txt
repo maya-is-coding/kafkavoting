@@ -26,7 +26,7 @@ In the
 VoteConsumerApplication.java
 , we use a HashMap<String, Integer>.
 
-Why? A HashMap stores data in Key-Value pairs (e.g., "Candidate A" -> 500 votes).
+Why? A HashMap stores data in Key-Value pairs (e.g., "Progress United" -> 500 votes).
 Algorithm Benefit: It provides an O(1) time complexity for lookups and insertions. This means whether you have 2 candidates or 2,000 candidates, the computer can instantly find the candidate and increment their vote without having to scan through a long list. This is critical for high-load systems.
 2. The Core Algorithm: The Accumulator Pattern (State Management)
 The Consumer uses a continuous accumulator algorithm to process the endless stream of votes.
@@ -45,7 +45,7 @@ Here is exactly what you tell the Professor if they ask:
 "We implemented a 'One Vote Per Aadhar' security check directly in the Consumer to prevent duplicate voting. When our API (Computer 3) receives a vote, it asks for the Candidate and the user's Aadhar ID. It sends this over Kafka to the Consumer (Computer 2). The Consumer uses a Java HashSet Data Structure to track the Aadhar IDs. Because a HashSet has an O(1) Time Complexity, our system can verify if an Aadhar ID is a duplicate in less than a millisecond, completely ignoring it if they try to vote twice. This allows us to guarantee perfect vote counts without slowing down our 1,000-vote Load Test!"
 
 How to test this during the demo:
-Run a test where someone votes: curl -X POST "http://<Computer_3_IP>:8080/vote?candidate=A&aadhar=1234"
+Run a test where someone votes: curl -X POST "http://<Computer_3_IP>:8080/vote?candidate=Progress%20United&aadhar=1234"
 Try to run the exact same command a second time.
 Show the professor that Computer 2's Screen will instantly reject it, printing: "Duplicate vote rejected for Aadhar: 1234"!
 Show the professor the final vote tally on Computer 2 was not incremented.
@@ -101,11 +101,11 @@ Computer 2 (Consumer), in terminal: cd vote-consumer mvn spring-boot:run
 Computer 3 (Producer), in terminal: cd vote-producer mvn spring-boot:run
 
 4. Cast the First Single Vote
-Computer 3 (Producer) opens a new terminal and runs: curl -X POST "http://localhost:8080/vote?candidate=A&aadhar=1111"
+Computer 3 (Producer) opens a new terminal and runs: curl -X POST "http://localhost:8080/vote?candidate=Progress%20United&aadhar=1111"
 
-Computer 2 (Consumer) points to their screen and shows: Valid vote processed for: A by Aadhar: 1111!
+Computer 2 (Consumer) points to their screen and shows: Valid vote processed for: Progress United by Aadhar: 1111!
 
-Computer 2 then types: curl "http://localhost:8081/results" (It will return {"A": 1})
+Computer 2 then types: curl "http://localhost:8081/results" (It will return {"Progress United": 1})
 
 5. Execute the Load Test
 Take out Computer 4.
@@ -118,7 +118,7 @@ Computer 4 runs in PowerShell: Type
 
 Look at Computer 2's screen. The terminal will be flying by at lightning speed printing all 1,000 votes as it catches them from the Kafka backbone. It will not crash.
 
-Computer 2 types: curl "http://localhost:8081/results" (It will return exactly {"A": 1001})
+Computer 2 types: curl "http://localhost:8081/results" (It will return the counts, effectively e.g. {"Progress United": 251})
 
 
 Comment

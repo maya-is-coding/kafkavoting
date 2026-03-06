@@ -256,30 +256,30 @@ The system is deployed across **four physical computers** on a shared Wi-Fi netw
 A single HTTP request was sent to the Producer:
 
 ```
-curl -X POST "http://<Computer_3_IP>:8080/vote?candidate=A&aadhar=1111"
+curl -X POST "http://<Computer_3_IP>:8080/vote?candidate=Progress%20United&aadhar=1111"
 ```
 
-**Result:** The Consumer confirmed `Valid vote processed for: A by Aadhar: 1111`, and the `/results` endpoint returned `{"A": 1}`.
+**Result:** The Consumer confirmed `Valid vote processed for: Progress United by Aadhar: 1111`, and the `/results` endpoint returned `{"Progress United": 1}`.
 
 ### 8.2 Duplicate-Vote Test
 
 The same request (identical Aadhar ID) was sent a second time.
 
-**Result:** The Consumer printed `Duplicate vote rejected for Aadhar: 1111`, and the tally remained `{"A": 1}`. The duplicate-detection mechanism functioned correctly.
+**Result:** The Consumer printed `Duplicate vote rejected for Aadhar: 1111`, and the tally remained `{"Progress United": 1}`. The duplicate-detection mechanism functioned correctly.
 
 ### 8.3 Load Test (1,000 Concurrent Voters)
 
 The PowerShell script fired 1,000 parallel requests, each with a unique Aadhar ID.
 
-**Result:** All 1,000 votes were successfully consumed and tallied. The `/results` endpoint returned `{"A": 1001}` (1 from the single-vote test + 1,000 from the load test). No votes were lost, and no service crashed.
+**Result:** All 1,000 votes were successfully consumed and tallied. The `/results` endpoint returned combined totals, for example `{"Progress United": 251, "The Future Party": 249...}` (1 from the single-vote test + 1,000 from the load test). No votes were lost, and no service crashed.
 
 ### 8.4 Summary of Results
 
 | Test Case | Expected Outcome | Actual Outcome | Status |
 |---|---|---|---|
-| Single valid vote | Tally incremented by 1 | `{"A": 1}` | ✅ Pass |
-| Duplicate Aadhar ID | Vote rejected, tally unchanged | `{"A": 1}` | ✅ Pass |
-| 1,000 concurrent votes | All 1,000 tallied correctly | `{"A": 1001}` | ✅ Pass |
+| Single valid vote | Tally incremented by 1 | `{"Progress United": 1}` | ✅ Pass |
+| Duplicate Aadhar ID | Vote rejected, tally unchanged | `{"Progress United": 1}` | ✅ Pass |
+| 1,000 concurrent votes | All 1,000 tallied correctly | e.g. `{"Progress United": 251...}` | ✅ Pass |
 
 ---
 
