@@ -270,6 +270,33 @@
                 transform: rotate(360deg);
             }
         }
+
+        .clear-btn {
+            display: block;
+            margin: 2.5rem auto 0;
+            padding: 0.75rem 2rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            border-color: #ef4444;
+        }
+
+        .clear-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -287,6 +314,8 @@
         <div class="candidates-container" id="candidatesEl">
             <div class="loader"></div>
         </div>
+
+        <button id="clearBtn" class="clear-btn" onclick="clearResults()">Reset Election</button>
     </div>
 
     <script>
@@ -414,6 +443,28 @@
         // Initial fetch and polling setup
         fetchResults();
         setInterval(fetchResults, 2000); // Poll every 2 seconds
+
+        async function clearResults() {
+            if (!confirm("Are you sure you want to permanently delete all votes and reset the election?")) return;
+
+            const btn = document.getElementById('clearBtn');
+            btn.disabled = true;
+            btn.innerText = "Resetting...";
+
+            try {
+                const response = await fetch('/clear', { method: 'POST' });
+                if (response.ok) {
+                    document.getElementById('candidatesEl').innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No votes recorded yet. Start voting!</div>';
+                    document.getElementById('totalCount').innerText = '0';
+                    previousData = {};
+                }
+            } catch (error) {
+                console.error("Failed to clear results", error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Reset Election";
+            }
+        }
     </script>
 </body>
 

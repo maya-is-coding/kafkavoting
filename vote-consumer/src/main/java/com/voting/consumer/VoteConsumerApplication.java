@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.*;
@@ -103,5 +104,15 @@ public class VoteConsumerApplication {
         // Return the in-memory map for real-time accuracy and to avoid file locking
         // issues
         return new HashMap<>(voteCounts);
+    }
+
+    @PostMapping("/clear")
+    public void clearResults() {
+        synchronized (this) {
+            System.out.println("MANUAL CLEAR REQUESTED BY UI: Resetting Election Results.");
+            voteCounts.clear();
+            votedAadhars.clear();
+            saveResults();
+        }
     }
 }
