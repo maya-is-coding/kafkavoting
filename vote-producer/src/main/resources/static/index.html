@@ -512,6 +512,13 @@
                 const aadhar = aadharInput.value.trim();
                 if (!aadhar || !selectedCandidate) return;
 
+                // 🚀 FEAT: Check local storage to visually block double-voting right from the UI
+                const votedAadhars = JSON.parse(localStorage.getItem('votedAadhars') || '[]');
+                if (votedAadhars.includes(aadhar)) {
+                    showToast('Warning: You have already cast a vote with this Aadhar ID!', 'error');
+                    return;
+                }
+
                 setSubmitting(true);
 
                 try {
@@ -530,6 +537,10 @@
 
                     if (response.ok) {
                         showToast('Vote successfully cast!', 'success');
+
+                        // Save Aadhar to local storage to prevent duplicate votes in this browser
+                        votedAadhars.push(aadhar);
+                        localStorage.setItem('votedAadhars', JSON.stringify(votedAadhars));
 
                         // Reset Form visually on success
                         setTimeout(() => {
