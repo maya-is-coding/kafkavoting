@@ -1,4 +1,4 @@
-$apiUrlBase = "http://10.12.71.152:8080"
+$apiUrlBase = "http://10.12.71.152:8080/vote"
 $totalVotes = 1000
 $candidates = @("The Future Party", "Progress United", "Common Ground", "The Bridge Alliance")
 
@@ -21,9 +21,12 @@ $ScriptBlock = {
     
     try {
         Invoke-WebRequest -Uri $fullUrl -Method POST -UseBasicParsing | Out-Null
+        $result = "Success"
     } catch {
-        # Ignore temporary failure
+        $result = "Failure"
     }
+    $result
+
 }
 
 # Fire off 1,000 requests
@@ -44,9 +47,19 @@ while ($Jobs.Handle.IsCompleted -contains $false) {
 }
 Write-Host " Done."
 
-# Cleanup
-$Jobs | ForEach-Object { $_.Runspace.EndInvoke($_.Handle); $_.Runspace.Dispose() }
+# Cleanup and collect results
+$results = $Jobs | ForEach-Object { 
+    $res = $_.Runspace.EndInvoke($_.Handle)
+    $_.Runspace.Dispose()
+    $res
+}
 $RunspacePool.Close()
 
-Write-Host "Done! $totalVotes distinct Aadhar votes successfully blasted to Computer 3."
+$successCount = ($results | Where-Object { $_ -eq "Success" }).Count
+$failureCount = ($results | Where-Object { $_ -eq "Failure" }).Count
+
+Write-Host "Done! Summary:"
+Write-Host "Total Requests: $totalVotes"
+Write-Host "Successes:      $successCount" -ForegroundColor Green
+Write-Host "Failures:       $failureCount" -ForegroundColor Red
 Write-Host "Check Computer 2 to verify all votes were successfully queued in Kafka and counted!"
